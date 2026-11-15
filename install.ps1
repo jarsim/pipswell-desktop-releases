@@ -6,7 +6,7 @@
 # Nothing outside %LOCALAPPDATA%\Pipswell, the user Path and the Start Menu / Desktop shortcuts that
 # `pipswell setup` makes is touched; no administrator rights are needed.
 #
-#   PIPSWELL_RELEASES_URL   where latest.txt, the zip and its .sha256 live (https, or http://127.0.0.1 for tests)
+#   PIPSWELL_RELEASES_URL   where latest-windows-x64.txt, the zip and its .sha256 live (https, or http://127.0.0.1 for tests)
 #   PIPSWELL_HOME           install somewhere else than %LOCALAPPDATA%\Pipswell
 #
 # This file is pure ASCII on purpose: `irm` of a file with a byte order mark or a code page the
@@ -231,17 +231,20 @@ MetaTrader 5 is not installed.
         Say "Python $PYTHON_VERSION ..."
         Invoke-Native $uv @('python', 'install', $PYTHON_VERSION) 'Installing Python'
 
-        # ---- the release: version, file and hash come from latest.txt; the zip must match them -----
+        # ---- the release: version, file and hash come from latest-windows-x64.txt (the compiled
+        # Windows build); the zip must match them -----
         Say 'Looking for the newest release ...'
-        $latest = Join-Path $work 'latest.txt'
-        try { Get-Download "$releasesUrl/latest.txt" $latest $loopbackHttp } catch { throw "Could not read $releasesUrl/latest.txt" }
+        $platform = 'windows-x64'
+        $latestName = "latest-$platform.txt"
+        $latest = Join-Path $work $latestName
+        try { Get-Download "$releasesUrl/$latestName" $latest $loopbackHttp } catch { throw "Could not read $releasesUrl/$latestName" }
         $line = (Get-Content -LiteralPath $latest -TotalCount 1)
         $parts = @(([string]$line).Trim() -split '\s+')
-        if ($parts.Count -lt 3) { throw 'latest.txt: expected "<version> <file> <sha256>".' }
+        if ($parts.Count -lt 3) { throw "${latestName}: expected `"<version> <file> <sha256>`"." }
         $version = $parts[0]; $file = $parts[1]; $sha = $parts[2]
-        if ($version -notmatch '^[0-9]+(\.[0-9]+){1,3}([-+.][0-9A-Za-z.]+)?$') { throw 'latest.txt: bad version.' }
-        if ($file -cne "pipswell-desktop-$version.zip") { throw 'latest.txt: bad file name.' }
-        if ($sha -cnotmatch '^[0-9a-f]{64}$') { throw 'latest.txt: bad SHA256.' }
+        if ($version -notmatch '^[0-9]+(\.[0-9]+){1,3}([-+.][0-9A-Za-z.]+)?$') { throw "${latestName}: bad version." }
+        if ($file -cne "pipswell-desktop-$version-$platform.zip") { throw "${latestName}: bad file name." }
+        if ($sha -cnotmatch '^[0-9a-f]{64}$') { throw "${latestName}: bad SHA256." }
 
         $target = Join-Path $appRoot $version
         if (Test-Path -LiteralPath (Join-Path $target '.installed') -PathType Leaf) {
@@ -254,8 +257,8 @@ MetaTrader 5 is not installed.
             Get-Download "$releasesUrl/$file.sha256" $side $loopbackHttp
             $got = Get-Sha256 $zip
             $sideSha = (([string](Get-Content -LiteralPath $side -TotalCount 1)).Trim() -split '\s+')[0].ToLowerInvariant()
-            if ($got -ne $sha) { throw 'The download does not match the SHA256 in latest.txt. Nothing was installed.' }
-            if ($sideSha -ne $sha) { throw "$file.sha256 disagrees with latest.txt. Nothing was installed." }
+            if ($got -ne $sha) { throw "The download does not match the SHA256 in $latestName. Nothing was installed." }
+            if ($sideSha -ne $sha) { throw "$file.sha256 disagrees with $latestName. Nothing was installed." }
             Say 'SHA256 verified.'
 
             # Unpack with the checks `pipswell update` applies (pipswell/updater.py extract): no symlink,
