@@ -30,6 +30,8 @@ or the Update button in the app.
 - From 0.2.0.dev29 on, `pipswell update` and the in-app Update button refuse to update while any account has an
   open position or pending order. Re-running the install command does not check this, and the variable
   `PIPSWELL_UPDATE_WITH_POSITIONS=1` overrides it on purpose.
-- The licence is a short-lived, server-signed entitlement. Its enforcement is built and tested but switched off
-  in this build; it is switched on in a later release.
+- The licence is a short-lived, server-signed entitlement (at most 24 hours, refreshed hourly). From 0.2.0.dev30
+  on, every release build enforces it: a feature needs both the signed licence and the plan. A lapsed licence only
+  stops something new from opening; closing, SL/TP changes and the guards on positions already open never ask
+  for one.
 - Every release publishes a software bill of materials (`sbom.cdx.json`, CycloneDX) next to its files.
